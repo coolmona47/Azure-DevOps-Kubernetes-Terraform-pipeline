@@ -1,0 +1,39 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customise to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+pool:
+pool:
+  vmImage: 'ubuntu-latest'
+   # (this matches the agent pool you used , actually iam using the local machine as host instaed of virtula machine so it does not have the automatic parallel running of multiple task as it can nit scale up  and down automaticaly)
+
+jobs:
+- job: Job1
+  steps:
+  - script: echo Job1 - Hello, world, changed!
+    displayName: 'Run a one-line script'
+  - script: |
+      echo Add other tasks to build, test, and deploy your project.
+      echo See https://aka.ms/yaml
+      echo more information
+    displayName: 'Run a multi-line script'
+- job: Job2
+  dependsOn: Job1
+  steps:
+  - script: echo Job2!
+    displayName: 'Run a one-line script'
+- job: Job3
+  dependsOn: Job1
+  steps:
+  - script: echo Job3!
+    displayName: 'Run a one-line script'
+- job: Job4
+  dependsOn: 
+  - Job2
+  - Job3
+  steps:
+  - script: echo Job3!
+    displayName: 'Run a one-line script'
