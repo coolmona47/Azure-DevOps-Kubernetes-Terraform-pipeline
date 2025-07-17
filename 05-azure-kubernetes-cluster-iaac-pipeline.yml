@@ -18,25 +18,29 @@ stages:
           vmImage: 'ubuntu-latest'
 
         steps:
-          # ✅ Download the client secret as a secure file (private key or secret)
+
+          # ✅ Checkout code
+          - checkout: self
+
+          # ✅ Download the client secret as a secure file
           - task: DownloadSecureFile@1
             name: clientSecretFile
             inputs:
-              secureFile: 'azure1-rsa.pub'  # Make sure this matches the uploaded secure file name
+              secureFile: 'azure1-rsa.pub'  # Already uploaded
 
-          # ✅ Export the secure file content as environment variable (client secret)
+          # ✅ Export client secret from secure file
           - script: |
               echo "Reading secure file content..."
               export ARM_CLIENT_SECRET=$(cat $(clientSecretFile.secureFilePath))
               echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]$ARM_CLIENT_SECRET"
             displayName: 'Export client secret from secure file'
 
-          # ✅ Install Terraform CLI (Fix ambiguity using full task name)
-          - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+          # ✅ Install Terraform CLI (disambiguated version)
+          - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
             inputs:
-              terraformVersion: '1.5.7'  # Recommended version
+              terraformVersion: '1.5.7'  # Or whatever version you need
 
-          # ✅ Terraform Init with remote backend config
+          # ✅ Terraform Init
           - script: |
               terraform init \
                 -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
@@ -47,6 +51,7 @@ stages:
                 -backend-config="tenant_id=$(ARM_TENANT_ID)" \
                 -backend-config="client_id=$(ARM_CLIENT_ID)" \
                 -backend-config="client_secret=$(ARM_CLIENT_SECRET)"
+            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
             env:
               ARM_CLIENT_ID: $(ARM_CLIENT_ID)
               ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
@@ -56,8 +61,10 @@ stages:
 
           # ✅ Terraform Plan
           - script: terraform plan
+            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
             displayName: 'Terraform Plan'
 
           # ✅ Terraform Apply
           - script: terraform apply -auto-approve
+            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
             displayName: 'Terraform Apply'
