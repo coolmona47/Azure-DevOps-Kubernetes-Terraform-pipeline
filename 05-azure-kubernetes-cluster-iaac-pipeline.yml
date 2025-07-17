@@ -8,21 +8,25 @@ steps:
 - script: echo K8S Terraform Azure!
   displayName: 'Run a one-line script'
 
+# ✅ Secure file (SSH public key)
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-- task: TerraformCLI@0
+# ✅ Install Terraform from Jason Johnson's extension
+- task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
   inputs:
-    command: 'init'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    backendType: 'azurerm'
-    backendServiceArm: 'azure-resource-manager-service-connection'
-    ensureBackend: true
-    backendAzureRmResourceGroupName: 'terraform-backend-rg'
-    backendAzureRmResourceGroupLocation: 'westeurope'
-    backendAzureRmStorageAccountName: 'storageacctrangaxyz'
-    backendAzureRmContainerName: 'storageacctrangacontainer'
-    backendAzureRmKey: 'kubernetes-dev.tfstate'
+    terraformVersion: '1.5.7'  # or any version you need
+
+# ✅ Terraform Init
+- script: |
+    terraform init \
+      -backend-config="resource_group_name=terraform-backend-rg" \
+      -backend-config="storage_account_name=storageacctrangaxyz" \
+      -backend-config="container_name=storageacctrangacontainer" \
+      -backend-config="key=kubernetes-dev.tfstate"
+  workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
+  displayName: 'Terraform Init'
+
 
