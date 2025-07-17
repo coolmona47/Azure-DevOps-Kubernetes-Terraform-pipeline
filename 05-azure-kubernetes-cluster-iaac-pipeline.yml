@@ -3,41 +3,43 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
-
 steps:
 - script: echo K8S Terraform Azure!
   displayName: 'Run a one-line script'
 
-# ✅ Download the SSH public key from secure files
+  
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-# ✅ Install Terraform (using the marketplace task you had)
-- task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
-  inputs:
-    terraformVersion: '1.5.7'
-
-# ✅ Terraform Init (with built-in Azure login)
 - task: TerraformCLI@0
   displayName: 'Terraform Init'
   inputs:
     command: 'init'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
     backendType: 'azurerm'
-    ensureBackend: true
     backendServiceArm: 'azure-resource-manager-service-connection'
+    ensureBackend: true
     backendAzureRmResourceGroupName: 'terraform-backend-rg'
-    backendAzureRmStorageAccountName: 'storageacctmohanxyz'
-    backendAzureRmContainerName: 'storageacctrangacontainer'
+    backendAzureRmResourceGroupLocation: 'westeurope'
+    backendAzureRmStorageAccountName: 'sstorageacctmohanxyz'
+    backendAzureRmContainerName: 'storageacctmohancontainer'
     backendAzureRmKey: 'kubernetes-dev.tfstate'
 
-# ✅ Terraform Apply (as a raw script, but Azure login already done by above task)
-- script: |
-    terraform apply -auto-approve \
-      -var client_id=$(client_id) \
-      -var client_secret=$(client_secret) \
-      -var ssh_public_key=$(publickey.secureFilePath)
-  workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
+- task: TerraformCLI@0
+  displayName: 'Terraform Plan'
+  inputs:
+    command: 'plan'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    environmentServiceName: 'azure-resource-manager-service-connection'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+
+- task: TerraformCLI@0
   displayName: 'Terraform Apply'
+  inputs:
+    command: 'apply'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    environmentServiceName: 'azure-resource-manager-service-connection'
+    commandOptions: '-auto-approve -var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+
