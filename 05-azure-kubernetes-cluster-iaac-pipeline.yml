@@ -13,25 +13,61 @@ steps:
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-- task: TerraformCLI@0
+- script: |
+    # Download and install Terraform manually
+    TERRAFORM_VERSION=1.5.7
+    wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    sudo mv terraform /usr/local/bin/
+    terraform --version
+    which terraform
+  displayName: 'Install Terraform'
+
+- task: AzureCLI@2
   displayName: 'Terraform Init'
   inputs:
-    command: 'init'
+    azureSubscription: 'azure-resource-manager-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    backendType: 'azurerm'
-    backendServiceArm: 'azure-resource-manager-service-connection'
-    ensureBackend: true
-    backendAzureRmResourceGroupName: 'terraform-backend-rg'
-    backendAzureRmResourceGroupLocation: 'westeurope'
-    backendAzureRmStorageAccountName: 'storageacctrangaxyz'
-    backendAzureRmContainerName: 'storageacctrangacontainer'
-    backendAzureRmKey: 'kubernetes-dev.tfstate'
+    addSpnToEnvironment: true
+    inlineScript: |
+      # Set up backend configuration
+      terraform init \
+        -backend-config="resource_group_name=terraform-backend-rg" \
+        -backend-config="storage_account_name=storageacctrangaxyz" \
+        -backend-config="container_name=storageacctrangacontainer" \
+        -backend-config="key=kubernetes-dev.tfstate" \
+        -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
+        -backend-config="tenant_id=$ARM_TENANT_ID" \
+        -backend-config="client_id=$ARM_CLIENT_ID" \
+        -backend-config="client_secret=$ARM_CLIENT_SECRET"
 
-- task: TerraformCLI@0
+- task: AzureCLI@2
   displayName: 'Terraform Plan'
   inputs:
-    command: 'plan'
+    azureSubscription: 'azure-resource-manager-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    environmentServiceName: 'azure-resource-manager-service-connection'
-    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+    addSpnToEnvironment: true
+    inlineScript: |
+      terraform plan \
+        -var client_id=$(client_id) \
+        -var client_secret=$(client_secret) \
+        -var ssh_public_key=$(publickey.secureFilePath)
+
+- task: AzureCLI@2
+  displayName: 'Terraform Apply'
+  inputs:
+    azureSubscription: 'azure-resource-manager-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    addSpnToEnvironment: true
+    inlineScript: |
+      terraform apply -auto-approve \
+        -var client_id=$(client_id) \
+        -var client_secret=$(client_secret) \
+        -var ssh_public_key=$(publickey.secureFilePath)
 
