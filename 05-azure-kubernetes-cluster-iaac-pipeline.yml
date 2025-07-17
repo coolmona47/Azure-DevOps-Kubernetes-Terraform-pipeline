@@ -14,10 +14,20 @@ steps:
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-# ✅ Install Terraform from Jason Johnson's extension
+# ✅ Azure login using your service connection
+- task: AzureCLI@2
+  displayName: 'Azure CLI Login'
+  inputs:
+    azureSubscription: 'azure-resource-manager-service-connection'  # 👈 your actual service connection
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      echo "Logged into Azure successfully"
+
+# ✅ Install Terraform
 - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
   inputs:
-    terraformVersion: '1.5.7'  # or any version you need
+    terraformVersion: '1.5.7'
 
 # ✅ Terraform Init
 - script: |
@@ -28,6 +38,8 @@ steps:
       -backend-config="key=kubernetes-dev.tfstate"
   workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
   displayName: 'Terraform Init'
+
+# ✅ Terraform Apply
 - script: |
     terraform apply -auto-approve \
       -var client_id=$(client_id) \
@@ -35,4 +47,3 @@ steps:
       -var ssh_public_key=$(publickey.secureFilePath)
   workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
   displayName: 'Terraform Apply'
-
