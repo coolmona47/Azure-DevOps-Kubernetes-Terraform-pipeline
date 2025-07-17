@@ -5,24 +5,27 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo K8S Terraform Azure!
-  displayName: 'Run a one-line script'
+- script: echo "🚀 Starting Terraform deployment to Azure!"
+  displayName: 'Run Hello Script'
 
+# 📥 Download SSH public key
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure1-rsa.pub'
 
+# 🛠️ Install Terraform manually
 - script: |
     TERRAFORM_VERSION=1.5.7
     wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
     sudo mv terraform /usr/local/bin/
     terraform version
-    which terraform
   displayName: 'Install Terraform'
 
+# 🔐 Set environment variables using Azure CLI
 - task: AzureCLI@2
+  name: SetTerraformEnvVars
   displayName: 'Set ARM Environment Variables'
   inputs:
     azureSubscription: 'azure-resource-manager-service-connection'
@@ -30,13 +33,21 @@ steps:
     scriptLocation: 'inlineScript'
     addSpnToEnvironment: true
     inlineScript: |
+      echo "Exporting Terraform authentication environment variables..."
       echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
       echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$servicePrincipalKey"
       echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
       echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id --output tsv)"
       echo "##vso[task.setvariable variable=ARM_USE_CLI]false"
 
+# 🚀 Terraform Init
 - script: |
+    export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+    export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+    export ARM_TENANT_ID=$(ARM_TENANT_ID)
+    export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+    export ARM_USE_CLI=false
+
     terraform init \
       -backend-config="resource_group_name=terraform-backend-rg" \
       -backend-config="storage_account_name=storageacctrangaxyz" \
@@ -44,37 +55,33 @@ steps:
       -backend-config="key=kubernetes-dev.tfstate"
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Init'
-  env:
-    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-    ARM_TENANT_ID: $(ARM_TENANT_ID)
-    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-    ARM_USE_CLI: $(ARM_USE_CLI)
 
+# 🧪 Terraform Plan
 - script: |
+    export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+    export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+    export ARM_TENANT_ID=$(ARM_TENANT_ID)
+    export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+    export ARM_USE_CLI=false
+
     terraform plan \
-      -var client_id="$(ARM_CLIENT_ID)" \
-      -var client_secret="$(ARM_CLIENT_SECRET)" \
+      -var client_id="$ARM_CLIENT_ID" \
+      -var client_secret="$ARM_CLIENT_SECRET" \
       -var ssh_public_key="$(publickey.secureFilePath)"
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Plan'
-  env:
-    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-    ARM_TENANT_ID: $(ARM_TENANT_ID)
-    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-    ARM_USE_CLI: $(ARM_USE_CLI)
 
+# ✅ Terraform Apply
 - script: |
+    export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+    export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+    export ARM_TENANT_ID=$(ARM_TENANT_ID)
+    export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+    export ARM_USE_CLI=false
+
     terraform apply -auto-approve \
-      -var client_id="$(ARM_CLIENT_ID)" \
-      -var client_secret="$(ARM_CLIENT_SECRET)" \
+      -var client_id="$ARM_CLIENT_ID" \
+      -var client_secret="$ARM_CLIENT_SECRET" \
       -var ssh_public_key="$(publickey.secureFilePath)"
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Apply'
-  env:
-    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-    ARM_TENANT_ID: $(ARM_TENANT_ID)
-    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-    ARM_USE_CLI: $(ARM_USE_CLI)
