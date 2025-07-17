@@ -5,16 +5,17 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo "🚀 Starting Terraform deployment to Azure!"
-  displayName: 'Run Hello Script'
+# 🛎️ Initial Echo
+- script: echo "Starting Terraform deployment to Azure!"
+  displayName: 'Hello Message'
 
-# 📥 Download SSH public key
+# 🔐 Download SSH public key
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-# 🛠️ Install Terraform manually
+# ⚒️ Install Terraform
 - script: |
     TERRAFORM_VERSION=1.5.7
     wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
@@ -23,25 +24,25 @@ steps:
     terraform version
   displayName: 'Install Terraform'
 
-# 🔐 Set environment variables using Azure CLI
+# 🌐 Set environment variables with AzureCLI
 - task: AzureCLI@2
-  name: SetTerraformEnvVars
-  displayName: 'Set ARM Environment Variables'
+  name: SetTerraformEnv
+  displayName: 'Export ARM Credentials'
   inputs:
     azureSubscription: 'azure-resource-manager-service-connection'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     addSpnToEnvironment: true
     inlineScript: |
-      echo "Exporting Terraform authentication environment variables..."
       echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
       echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$servicePrincipalKey"
       echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
       echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id --output tsv)"
       echo "##vso[task.setvariable variable=ARM_USE_CLI]false"
 
-# 🚀 Terraform Init
+# 🧱 Terraform Init
 - script: |
+    echo "Exporting credentials..."
     export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
     export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
     export ARM_TENANT_ID=$(ARM_TENANT_ID)
@@ -71,7 +72,7 @@ steps:
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Plan'
 
-# ✅ Terraform Apply
+# 🚀 Terraform Apply
 - script: |
     export ARM_CLIENT_ID=$(ARM_CLIENT_ID)
     export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
