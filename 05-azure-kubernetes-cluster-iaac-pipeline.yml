@@ -1,5 +1,5 @@
 trigger:
-- master
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -14,12 +14,11 @@ steps:
     secureFile: 'azure1-rsa.pub'
 
 - script: |
-    # Download and install Terraform manually
     TERRAFORM_VERSION=1.5.7
     wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
     sudo mv terraform /usr/local/bin/
-    terraform --version
+    terraform version
     which terraform
   displayName: 'Install Terraform'
 
@@ -54,9 +53,9 @@ steps:
 
 - script: |
     terraform plan \
-      -var client_id=$(client_id) \
-      -var client_secret=$(client_secret) \
-      -var ssh_public_key=$(publickey.secureFilePath)
+      -var client_id="$(ARM_CLIENT_ID)" \
+      -var client_secret="$(ARM_CLIENT_SECRET)" \
+      -var ssh_public_key="$(publickey.secureFilePath)"
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Plan'
   env:
@@ -68,9 +67,9 @@ steps:
 
 - script: |
     terraform apply -auto-approve \
-      -var client_id=$(client_id) \
-      -var client_secret=$(client_secret) \
-      -var ssh_public_key=$(publickey.secureFilePath)
+      -var client_id="$(ARM_CLIENT_ID)" \
+      -var client_secret="$(ARM_CLIENT_SECRET)" \
+      -var ssh_public_key="$(publickey.secureFilePath)"
   workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Apply'
   env:
