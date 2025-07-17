@@ -1,70 +1,28 @@
 trigger:
-  - main
+- master
 
-variables:
-  ARM_CLIENT_ID: '89f6f348-1d68-44b7-b962-98cff07d0c8b'
-  ARM_TENANT_ID: 'ff15dd1b-7224-4d88-8122-54a72fab1081'
-  ARM_SUBSCRIPTION_ID: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
-  TF_BACKEND_RESOURCE_GROUP: 'terraform-backend-rg'
-  TF_BACKEND_STORAGE_ACCOUNT: 'storagemohanxyz'
-  TF_BACKEND_CONTAINER_NAME: 'storageaccountmohancontainer'
-  TF_STATE_KEY: 'kubernetes-dev.tfstate'
+pool:
+  vmImage: 'ubuntu-latest'
 
-stages:
-  - stage: TerraformDeploy
-    jobs:
-      - job: Deploy
-        pool:
-          vmImage: 'ubuntu-latest'
+steps:
+- script: echo K8S Terraform Azure!
+  displayName: 'Run a one-line script'
 
-        steps:
+- task: DownloadSecureFile@1
+  name: publickey
+  inputs:
+    secureFile: 'azure1-rsa.pub'
 
-          # ✅ Checkout code
-          - checkout: self
+- task: TerraformCLI@0
+  inputs:
+    command: 'init'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    backendType: 'azurerm'
+    backendServiceArm: 'azure-resource-manager-service-connection'
+    ensureBackend: true
+    backendAzureRmResourceGroupName: 'terraform-backend-rg'
+    backendAzureRmResourceGroupLocation: 'westeurope'
+    backendAzureRmStorageAccountName: 'storageacctrangaxyz'
+    backendAzureRmContainerName: 'storageacctrangacontainer'
+    backendAzureRmKey: 'kubernetes-dev.tfstate'
 
-          # ✅ Download the client secret as a secure file
-          - task: DownloadSecureFile@1
-            name: clientSecretFile
-            inputs:
-              secureFile: 'azure1-rsa.pub'  # Already uploaded
-
-          # ✅ Export client secret from secure file
-          - script: |
-              echo "Reading secure file content..."
-              export ARM_CLIENT_SECRET=$(cat $(clientSecretFile.secureFilePath))
-              echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET;issecret=true]$ARM_CLIENT_SECRET"
-            displayName: 'Export client secret from secure file'
-
-          # ✅ Install Terraform CLI (disambiguated version)
-          - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
-            inputs:
-              terraformVersion: '1.5.7'  # Or whatever version you need
-
-          # ✅ Terraform Init
-          - script: |
-              terraform init \
-                -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
-                -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" \
-                -backend-config="key=$(TF_STATE_KEY)" \
-                -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" \
-                -backend-config="subscription_id=$(ARM_SUBSCRIPTION_ID)" \
-                -backend-config="tenant_id=$(ARM_TENANT_ID)" \
-                -backend-config="client_id=$(ARM_CLIENT_ID)" \
-                -backend-config="client_secret=$(ARM_CLIENT_SECRET)"
-            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
-            displayName: 'Terraform Init'
-
-          # ✅ Terraform Plan
-          - script: terraform plan
-            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
-            displayName: 'Terraform Plan'
-
-          # ✅ Terraform Apply
-          - script: terraform apply -auto-approve
-            workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
-            displayName: 'Terraform Apply'
