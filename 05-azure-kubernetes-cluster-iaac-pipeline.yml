@@ -3,11 +3,11 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
+
 steps:
 - script: echo K8S Terraform Azure!
   displayName: 'Run a one-line script'
 
-  
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
@@ -24,50 +24,58 @@ steps:
   displayName: 'Install Terraform'
 
 - task: AzureCLI@2
+  displayName: 'Set ARM Environment Variables'
+  inputs:
+    azureSubscription: 'azure-resource-manager-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    addSpnToEnvironment: true
+    inlineScript: |
+      echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
+      echo "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$servicePrincipalKey"
+      echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
+      echo "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id --output tsv)"
+      echo "##vso[task.setvariable variable=ARM_USE_CLI]false"
+
+- script: |
+    terraform init \
+      -backend-config="resource_group_name=terraform-backend-rg" \
+      -backend-config="storage_account_name=storageacctrangaxyz" \
+      -backend-config="container_name=storageacctrangacontainer" \
+      -backend-config="key=kubernetes-dev.tfstate"
+  workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Init'
-  inputs:
-    azureSubscription: 'azure-resource-manager-service-connection'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    addSpnToEnvironment: true
-    inlineScript: |
-      # Set up backend configuration
-      terraform init \
-        -backend-config="resource_group_name=terraform-backend-rg" \
-        -backend-config="storage_account_name=storageacctrangaxyz" \
-        -backend-config="container_name=storageacctrangacontainer" \
-        -backend-config="key=kubernetes-dev.tfstate" \
-        -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
-        -backend-config="tenant_id=$ARM_TENANT_ID" \
-        -backend-config="client_id=$ARM_CLIENT_ID" \
-        -backend-config="client_secret=$ARM_CLIENT_SECRET"
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+    ARM_USE_CLI: $(ARM_USE_CLI)
 
-- task: AzureCLI@2
+- script: |
+    terraform plan \
+      -var client_id=$(client_id) \
+      -var client_secret=$(client_secret) \
+      -var ssh_public_key=$(publickey.secureFilePath)
+  workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Plan'
-  inputs:
-    azureSubscription: 'azure-resource-manager-service-connection'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    addSpnToEnvironment: true
-    inlineScript: |
-      terraform plan \
-        -var client_id=$(client_id) \
-        -var client_secret=$(client_secret) \
-        -var ssh_public_key=$(publickey.secureFilePath)
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+    ARM_USE_CLI: $(ARM_USE_CLI)
 
-- task: AzureCLI@2
+- script: |
+    terraform apply -auto-approve \
+      -var client_id=$(client_id) \
+      -var client_secret=$(client_secret) \
+      -var ssh_public_key=$(publickey.secureFilePath)
+  workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
   displayName: 'Terraform Apply'
-  inputs:
-    azureSubscription: 'azure-resource-manager-service-connection'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    addSpnToEnvironment: true
-    inlineScript: |
-      terraform apply -auto-approve \
-        -var client_id=$(client_id) \
-        -var client_secret=$(client_secret) \
-        -var ssh_public_key=$(publickey.secureFilePath)
-
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+    ARM_USE_CLI: $(ARM_USE_CLI)
