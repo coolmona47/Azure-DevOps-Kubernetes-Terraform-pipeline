@@ -28,5 +28,11 @@ steps:
       -backend-config="key=kubernetes-dev.tfstate"
   workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
   displayName: 'Terraform Init'
-
+- script: |
+    terraform apply -auto-approve \
+      -var client_id=$(client_id) \
+      -var client_secret=$(client_secret) \
+      -var ssh_public_key=$(publickey.secureFilePath)
+  workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
+  displayName: 'Terraform Apply'
 
