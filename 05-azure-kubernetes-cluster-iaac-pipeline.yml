@@ -1,4 +1,3 @@
-# Starter pipeline
 trigger:
 - main
 
@@ -6,21 +5,18 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-# ✅ Install Terraform first
-- task: TerraformInstaller@1
+# ✅ Correct Task Name
+- task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
   inputs:
-    terraformVersion: 'latest'
+    terraformVersion: '1.5.7'
 
-
-# 🟢 One-line script to confirm environment
 - script: echo k8s terraform azure!
   displayName: 'Run a one-line script'
 
-# ✅ Terraform init with Azure backend
+# ✅ Terraform Init
 - task: TerraformCLI@2
   inputs:
     command: 'init'
-    
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
     backendType: 'azurerm'
     backendServiceArm: 'Azure subscription 1(0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd)'
@@ -34,14 +30,16 @@ steps:
     backendAzureRmKey: 'kubernetes-dev.tfstate'
     allowTelemetryCollection: true
 
-# ✅ Optional: Download SSH public key for use in infrastructure
+# ✅ Optional: Download SSH key
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure_rsa.pub'
+
+# ✅ Terraform Init Again (if needed)
 - task: TerraformCLI@2
   inputs:
     command: 'init'
-    commandOptions: '-var clinet_id=$(client_id). -var clinet_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilepath)'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
     backendType: 'azurerm'
     allowTelemetryCollection: true
