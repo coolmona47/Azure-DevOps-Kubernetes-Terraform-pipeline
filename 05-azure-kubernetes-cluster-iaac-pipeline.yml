@@ -8,38 +8,32 @@ steps:
 - script: echo K8S Terraform Azure!
   displayName: 'Run a one-line script'
 
-# ✅ Secure file (SSH public key)
+# ✅ Download the SSH public key from secure files
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure1-rsa.pub'
 
-# ✅ Azure login using your service connection
-- task: AzureCLI@2
-  displayName: 'Azure CLI Login'
-  inputs:
-    azureSubscription: 'azure-resource-manager-service-connection'  # 👈 your actual service connection
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      echo "Logged into Azure successfully"
-
-# ✅ Install Terraform
+# ✅ Install Terraform (using the marketplace task you had)
 - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
   inputs:
     terraformVersion: '1.5.7'
 
-# ✅ Terraform Init
-- script: |
-    terraform init \
-      -backend-config="resource_group_name=terraform-backend-rg" \
-      -backend-config="storage_account_name=storageacctrangaxyz" \
-      -backend-config="container_name=storageacctrangacontainer" \
-      -backend-config="key=kubernetes-dev.tfstate"
-  workingDirectory: $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
+# ✅ Terraform Init (with built-in Azure login)
+- task: TerraformCLI@0
   displayName: 'Terraform Init'
+  inputs:
+    command: 'init'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    backendType: 'azurerm'
+    ensureBackend: true
+    backendServiceArm: 'azure-resource-manager-service-connection'
+    backendAzureRmResourceGroupName: 'terraform-backend-rg'
+    backendAzureRmStorageAccountName: 'storageacctrangaxyz'
+    backendAzureRmContainerName: 'storageacctrangacontainer'
+    backendAzureRmKey: 'kubernetes-dev.tfstate'
 
-# ✅ Terraform Apply
+# ✅ Terraform Apply (as a raw script, but Azure login already done by above task)
 - script: |
     terraform apply -auto-approve \
       -var client_id=$(client_id) \
