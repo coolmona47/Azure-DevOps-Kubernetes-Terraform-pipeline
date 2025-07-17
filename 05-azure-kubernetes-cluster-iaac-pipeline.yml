@@ -1,8 +1,4 @@
 # Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
 
@@ -10,11 +6,21 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+# ✅ Install Terraform first
+- task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+  inputs:
+    terraformVersion: '1.5.7'
+
+
+# 🟢 One-line script to confirm environment
 - script: echo k8s terraform azure!
   displayName: 'Run a one-line script'
+
+# ✅ Terraform init with Azure backend
 - task: TerraformCLI@2
   inputs:
     command: 'init'
+    
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
     backendType: 'azurerm'
     backendServiceArm: 'Azure subscription 1(0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd)'
@@ -28,7 +34,14 @@ steps:
     backendAzureRmKey: 'kubernetes-dev.tfstate'
     allowTelemetryCollection: true
 
+# ✅ Optional: Download SSH public key for use in infrastructure
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
     secureFile: 'azure_rsa.pub'
+- task: TerraformCLI@2
+  inputs:
+    command: 'init'
+    commandOptions: '-var clinet_id=$(client_id). -var clinet_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilepath)'
+    backendType: 'azurerm'
+    allowTelemetryCollection: true
