@@ -30,6 +30,8 @@ steps:
     name: publickey
     inputs:
       secureFile: 'azure_rsa1.pub'
+  - script: az account show
+    displayName: 'Check Azure Identity'
 
   # Terraform Init
   - task: TerraformCLI@0
