@@ -1,0 +1,21 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+
+  # ✅ Install Terraform
+  - task: TerraformInstaller@1
+    inputs:
+      terraformVersion: '1.5.7'
+
+  # 💡 Optional: Verify terraform is installed
+  - script: terraform version
+    displayName: 'Check Terraform Version'
+
+  # Your Terraform commands here (init/plan/apply)
+  - script: terraform init
+    displayName: 'Terraform Init'
