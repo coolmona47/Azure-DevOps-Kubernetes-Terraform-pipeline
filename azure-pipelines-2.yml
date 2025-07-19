@@ -12,7 +12,7 @@ steps:
 
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
-      terraformVersion: '1.5.7'
+      terraformVersion: '1.12.2'
 
   - script: terraform version
     displayName: 'Check Terraform Version'
