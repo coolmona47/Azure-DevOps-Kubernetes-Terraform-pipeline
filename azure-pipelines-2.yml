@@ -47,16 +47,17 @@ steps:
       allowTelemetryCollection: true
 
 
-# 🚀 Terraform Apply
+  # 🚀 Terraform Apply
   - task: TerraformCLI@1
     displayName: 'Terraform Apply'
     inputs:
       command: 'apply'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      environmentServiceName: 'azure-resorce-manager-service-connection'  # ✅ Your actual service connection name
+      environmentServiceName: 'azure-resorce-manager-service-connection'
       runAzLogin: true
       commandOptions: '-auto-approve -var "client_id=$(client_id)" -var "client_secret=$(client_secret)" -var "ssh_public_key=$(publickey.secureFilePath)"'
       allowTelemetryCollection: true
+
 
 
 
