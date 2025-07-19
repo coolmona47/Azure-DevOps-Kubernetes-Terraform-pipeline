@@ -8,7 +8,7 @@ steps:
   - checkout: self
 
   # ✅ Install Terraform
-  - task: TerraformInstaller@1
+  - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
       terraformVersion: '1.5.7'
 
@@ -16,6 +16,6 @@ steps:
   - script: terraform version
     displayName: 'Check Terraform Version'
 
-  # Your Terraform commands here (init/plan/apply)
+  # Terraform Init
   - script: terraform init
     displayName: 'Terraform Init'
