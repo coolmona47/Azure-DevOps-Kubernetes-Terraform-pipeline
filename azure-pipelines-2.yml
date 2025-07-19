@@ -5,35 +5,26 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  # These should be defined securely in the pipeline variable group or UI
-  client_id: $(client_id)
-  client_secret: $(client_secret)
   ssh_public_key_path: $(publickey.secureFilePath)
 
 steps:
   - checkout: self
 
-  # ✅ Install Terraform
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
       terraformVersion: '1.5.7'
 
-  # 💡 Optional: Verify terraform is installed
   - script: terraform version
     displayName: 'Check Terraform Version'
 
   - script: echo "Starting Terraform on Azure DevOps"
     displayName: 'Echo Start'
 
-  # Download the SSH public key from secure files
   - task: DownloadSecureFile@1
     name: publickey
     inputs:
       secureFile: 'azure_rsa1.pub'
-  - script: az account show
-    displayName: 'Check Azure Identity'
 
-  # Terraform Init
   - task: TerraformCLI@0
     displayName: 'Terraform Init'
     inputs:
@@ -49,6 +40,3 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
-
- 
-  
