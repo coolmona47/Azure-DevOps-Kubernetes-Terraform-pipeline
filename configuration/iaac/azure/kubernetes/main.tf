@@ -47,3 +47,7 @@ terraform {
     # container_name="<<storage_account_container_name>>" #OVERRIDE in TERRAFORM init
   }
 }
+provider "azurerm" {
+  features {}
+  resource_provider_registrations = "none"
+}
