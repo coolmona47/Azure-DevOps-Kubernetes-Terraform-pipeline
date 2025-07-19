@@ -1,57 +1,34 @@
-trigger:
-  - main
-
-pool:
-  vmImage: ubuntu-latest
-
-variables:
-  terraformVersion: '1.5.7'
-  workingDir: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-
 steps:
   - checkout: self
 
-  # ✅ Install Terraform explicitly
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
-      terraformVersion: '$(terraformVersion)'
+      terraformVersion: '1.5.7'
 
-  # ✅ Login to Azure using Service Connection
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'azure-resorce-manager-service-connection' # ✅ Use correct service connection name
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
-      inlineScript: |
-        echo "Logged in successfully using service connection"
-
-  # ✅ Verify Terraform version
   - script: |
-      echo "##[group]Verify Terraform Version"
-      export PATH="/opt/hostedtoolcache/terraform/$(terraformVersion)/x64:$PATH"
+      echo "##[group]Adding Terraform to PATH"
+      export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
       terraform version
       echo "##[endgroup]"
     displayName: 'Check Terraform Version'
 
-  # ✅ Terraform Init with Azure Backend
+  # ✅ Login to Azure first
+  - task: AzureCLI@2
+    displayName: 'Azure Login'
+    inputs:
+      azureSubscription: 'azure-resorce-manager-service-connection'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az account show
+
+  # ✅ Terraform Init
   - script: |
-      export PATH="/opt/hostedtoolcache/terraform/$(terraformVersion)/x64:$PATH"
+      export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
       terraform init \
         -backend-config="resource_group_name=terraform-backend-rg" \
         -backend-config="storage_account_name=storageacctmohanxyz" \
         -backend-config="container_name=storageacctmohan" \
         -backend-config="key=kubernetes-dev.tfstate"
     displayName: 'Terraform Init'
-    workingDirectory: '$(workingDir)'
-
-  # ✅ Terraform Plan with variables and service connection
-  - task: TerraformCLI@2
-    displayName: 'Terraform Plan'
-    inputs:
-      command: 'plan'
-      workingDirectory: '$(workingDir)'
-      environmentServiceName: 'azure-resorce-manager-service-connection'
-      commandOptions: >
-        -var client_id=$(client_id)
-        -var client_secret=$(client_secret)
-        -var ssh_public_key=$(publickey.secureFilePath)
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
