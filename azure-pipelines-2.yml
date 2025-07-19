@@ -31,44 +31,22 @@ steps:
     inputs:
       secureFile: 'azure_rsa1.pub'
 
-  # Terraform Init using Azure CLI
-  - task: AzureCLI@2
+  # Terraform Init
+  - task: TerraformCLI@0
     displayName: 'Terraform Init'
     inputs:
-      azureSubscription: 'azure-resorce-manager-service-connection'
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
+      command: 'init'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      inlineScript: |
-        # Initialize Terraform backend
-        terraform init \
-          -backend-config="resource_group_name=terraform-backend-rg" \
-          -backend-config="storage_account_name=storageacctmohanxyz" \
-          -backend-config="container_name=storageacctmohancontainer" \
-          -backend-config="key=kubernetes-dev.tfstate"
+      backendType: 'azurerm'
+      backendServiceArm: 'azure-resorce-manager-service-connection'
+      backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
+      ensureBackend: true
+      backendAzureRmResourceGroupName: 'terraform-backend-rg'
+      backendAzureRmResourceGroupLocation: 'westeurope'
+      backendAzureRmStorageAccountName: 'storageacctmohanxyz'
+      backendAzureRmContainerName: 'storageacctmohancontainer'
+      backendAzureRmKey: 'kubernetes-dev.tfstate'
+      allowTelemetryCollection: true
 
-  # Terraform Plan using Azure CLI
-  - task: AzureCLI@2
-    displayName: 'Terraform Plan'
-    inputs:
-      azureSubscription: 'azure-resorce-manager-service-connection'
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      inlineScript: |
-        terraform plan \
-          -var "client_id=$(client_id)" \
-          -var "client_secret=$(client_secret)" \
-          -var "ssh_public_key=$(publickey.secureFilePath)" \
-          -out=tfplan
-
-  # Terraform Apply using Azure CLI
-  - task: AzureCLI@2
-    displayName: 'Terraform Apply'
-    inputs:
-      azureSubscription: 'azure-resorce-manager-service-connection'
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      inlineScript: |
-        terraform apply -auto-approve tfplan
+ 
+  
