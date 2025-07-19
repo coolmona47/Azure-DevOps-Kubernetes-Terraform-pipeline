@@ -45,7 +45,7 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
-  - task: TerraformCLI@0
+  - task: TerraformCLI@1
     displayName: 'Terraform Apply'
     inputs:
       command: 'apply'
