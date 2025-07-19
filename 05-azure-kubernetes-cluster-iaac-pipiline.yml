@@ -1,38 +1,46 @@
 trigger:
-- main
+  - main
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo KS8 terraform azure!
-  displayName: 'Run a one-line script'
+  - checkout: self
 
-- task: DownloadSecureFile@1
-  name: publickey
-  inputs:
-    secureFile: 'azure_rsa1.pub'
+  # ✅ Explicitly specify the Terraform Installer task to avoid ambiguity
+  - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
+    inputs:
+      terraformVersion: '1.5.7'
 
-# 🔧 Manually export the Terraform path
-- script: |
-    echo "Adding Terraform to PATH"
-    export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
-    terraform version
-  displayName: 'Setup Terraform PATH'
+  # ✅ Add Terraform to PATH and check version
+  - script: |
+      echo "##[group]Adding Terraform to PATH"
+      export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
+      terraform version
+      echo "##[endgroup]"
+    displayName: 'Check Terraform Version'
 
-# ✅ TerraformCLI task
-- task: TerraformCLI@2
-  inputs:
-    command: 'init'
+  # ✅ Terraform Init
+  - script: |
+      export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
+      terraform init \
+        -backend-config="resource_group_name=terraform-backend-rg" \
+        -backend-config="storage_account_name=storageacctmohanxyz" \
+        -backend-config="container_name=storageacctmohan" \
+        -backend-config="key=kubernetes-dev.tfstate" \
+        -backend-config="subscription_id=0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd" \
+        -backend-config="tenant_id=ff15dd1b-7224-4d88-8122-54a72fab1081"
+    displayName: 'Terraform Init'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
-    backendType: 'azurerm'
-    backendServiceArm: 'azure-resorce-manager-service-connection'
-    backendAzureRmTenantId: 'ff15dd1b-7224-4d88-8122-54a72fab1081'
-    backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
-    ensureBackend: true
-    backendAzureRmResourceGroupName: 'terraform-backend-rg'
-    backendAzureRmResourceGroupLocation: 'westeurope'
-    backendAzureRmStorageAccountName: 'storageacctmohanxyz'
-    backendAzureRmContainerName: 'storageacctmohan'
-    backendAzureRmKey: 'kubernetes-dev.tfstate'
+
+  # ✅ Terraform Plan
+  - task: TerraformCLI@2
+    displayName: 'Terraform Plan'
+    inputs:
+      command: 'plan'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      environmentServiceName: 'azure-resorce-manager-service-connection'
+      commandOptions: >
+        -var client_id=$(client_id)
+        -var client_secret=$(client_secret)
+        -var ssh_public_key=$(publickey.secureFilePath)
