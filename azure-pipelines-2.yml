@@ -4,6 +4,12 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  # These should be defined securely in the pipeline variable group or UI
+  client_id: $(client_id)
+  client_secret: $(client_secret)
+  ssh_public_key_path: $(publickey.secureFilePath)
+
 steps:
   - checkout: self
 
@@ -16,6 +22,52 @@ steps:
   - script: terraform version
     displayName: 'Check Terraform Version'
 
+  - script: echo "Starting Terraform on Azure DevOps"
+    displayName: 'Echo Start'
+
+  # Download the SSH public key from secure files
+  - task: DownloadSecureFile@1
+    name: publickey
+    inputs:
+      secureFile: 'azure_rsa1.pub'
+
   # Terraform Init
-  - script: terraform init
+  - task: TerraformCLI@0
     displayName: 'Terraform Init'
+    inputs:
+      command: 'init'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      backendType: 'azurerm'
+      backendServiceArm: 'azure-resorce-manager-service-connection'
+      ensureBackend: true
+      backendAzureRmResourceGroupName: 'terraform-backend-rg'
+      backendAzureRmResourceGroupLocation: 'westeurope'
+      backendAzureRmStorageAccountName: 'storageacctmohanxyz'
+      backendAzureRmContainerName: 'storageacctmohancontainer'
+      backendAzureRmKey: 'kubernetes-dev.tfstate'
+      allowTelemetryCollection: true
+
+  # Terraform Plan (Optional but good practice)
+  - task: TerraformCLI@0
+    displayName: 'Terraform Plan'
+    inputs:
+      command: 'plan'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      environmentServiceName: 'azure-resorce-manager-service-connection'
+      commandOptions: >
+        -var "client_id=$(client_id)"
+        -var "client_secret=$(client_secret)"
+        -var "ssh_public_key=$(publickey.secureFilePath)"
+
+  # Terraform Apply
+  - task: TerraformCLI@0
+    displayName: 'Terraform Apply'
+    inputs:
+      command: 'apply'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      environmentServiceName: 'azure-resorce-manager-service-connection'
+      commandOptions: >
+        -auto-approve
+        -var "client_id=$(client_id)"
+        -var "client_secret=$(client_secret)"
+        -var "ssh_public_key=$(publickey.secureFilePath)"
