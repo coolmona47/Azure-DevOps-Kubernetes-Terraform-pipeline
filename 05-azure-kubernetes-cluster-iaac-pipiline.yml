@@ -5,9 +5,7 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- checkout: self
-
-- script: echo "K8S terraform azure!"
+- script: echo KS8 terraform azure!
   displayName: 'Run a one-line script'
 
 - task: DownloadSecureFile@1
@@ -15,6 +13,14 @@ steps:
   inputs:
     secureFile: 'azure_rsa1.pub'
 
+# 🔧 Manually export the Terraform path
+- script: |
+    echo "Adding Terraform to PATH"
+    export PATH="/opt/hostedtoolcache/terraform/1.5.7/x64:$PATH"
+    terraform version
+  displayName: 'Setup Terraform PATH'
+
+# ✅ TerraformCLI task
 - task: TerraformCLI@2
   inputs:
     command: 'init'
