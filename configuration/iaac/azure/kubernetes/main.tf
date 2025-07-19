@@ -3,9 +3,13 @@ resource "azurerm_resource_group" "resource_group" {
   location = var.location
 }
 
+
 provider "azurerm" {
   features {}
+  subscription_id = "0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd"
 }
+
+
 
 
 resource "azurerm_kubernetes_cluster" "terraform-k8s" {
