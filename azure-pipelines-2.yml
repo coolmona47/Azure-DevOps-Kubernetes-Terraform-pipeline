@@ -25,6 +25,7 @@ steps:
     inputs:
       secureFile: 'azure_rsa1.pub'
 
+
   - task: TerraformCLI@0
     displayName: 'Terraform Init'
     inputs:
