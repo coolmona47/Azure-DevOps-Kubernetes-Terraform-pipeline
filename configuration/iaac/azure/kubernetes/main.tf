@@ -7,7 +7,7 @@ provider "azurerm" {
   //version = "~>2.0.0"
   features {}
   resource_provider_registrations = "none"
-  features {}
+  
 }
 
 resource "azurerm_kubernetes_cluster" "terraform-k8s" {
