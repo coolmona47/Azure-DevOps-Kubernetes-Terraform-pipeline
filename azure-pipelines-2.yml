@@ -45,7 +45,18 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
-  
+  - task: TerraformCLI@0
+    displayName: 'Terraform Apply'
+    inputs:
+      command: 'apply'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      environmentServiceName: 'azure-resorce-manager-service-connection'
+      commandOptions: >
+        -var client_id=$(client_id)
+        -var client_secret=$(client_secret)
+        -var ssh_public_key=$(publickey.secureFilePath)
+
+
 
 
 
