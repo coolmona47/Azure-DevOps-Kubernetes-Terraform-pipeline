@@ -10,29 +10,33 @@ variables:
 steps:
   - checkout: self
 
+  # ✅ Install Terraform (Jason Johnson extension)
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
       terraformVersion: '1.12.2'
 
+  # 🔍 Verify Terraform version
   - script: terraform version
     displayName: 'Check Terraform Version'
 
+  # ✨ Pipeline startup message
   - script: echo "Starting Terraform on Azure DevOps"
     displayName: 'Echo Start'
 
+  # 🔐 Download SSH public key
   - task: DownloadSecureFile@1
     name: publickey
     inputs:
       secureFile: 'azure_rsa1.pub'
 
-
+  # 🚀 Terraform Backend Initialization
   - task: TerraformCLI@0
     displayName: 'Terraform Init'
     inputs:
       command: 'init'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
       backendType: 'azurerm'
-      backendServiceArm: 'azure-resorce-manager-service-connection'
+      backendServiceArm: 'azure-resorce-manager-service-connection'  # ✅ Matches your actual service connection name
       backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
       ensureBackend: true
       backendAzureRmResourceGroupName: 'terraform-backend-rg'
