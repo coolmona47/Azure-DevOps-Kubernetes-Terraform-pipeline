@@ -50,4 +50,6 @@ terraform {
 provider "azurerm" {
   features {}
   resource_provider_registrations = "none"
+  // version = "~>2.0.0"   # Optional if managed externally
 }
+
