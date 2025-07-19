@@ -45,15 +45,26 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
-    # 🚀 Terraform Apply
+
+# 🔓 Terraform Force Unlock
+  - task: TerraformCLI@1
+    displayName: 'Force Unlock Terraform State'
+    inputs:
+      command: 'force-unlock'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      lockID: 'c8aed16a-c49a-648d-f5fd-f46a32ba500b'
+      allowTelemetryCollection: true
+
+# 🚀 Terraform Apply
   - task: TerraformCLI@1
     displayName: 'Terraform Apply'
     inputs:
       command: 'apply'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      environmentServiceName: 'azure-resorce-manager-service-connection'
+      environmentServiceName: 'azure-resorce-manager-service-connection'  # ✅ Your actual service connection name
       runAzLogin: true
-      commandOptions: '-var "client_id=$(client_id)" -var "client_secret=$(client_secret)" -var "ssh_public_key=$(publickey.secureFilePath)"'
+      commandOptions: '-auto-approve -var "client_id=$(client_id)" -var "client_secret=$(client_secret)" -var "ssh_public_key=$(publickey.secureFilePath)"'
       allowTelemetryCollection: true
+
 
 
