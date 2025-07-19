@@ -6,6 +6,8 @@ resource "azurerm_resource_group" "resource_group" {
 provider "azurerm" {
   //version = "~>2.0.0"
   features {}
+  resource_provider_registrations = "none"
+  features {}
 }
 
 resource "azurerm_kubernetes_cluster" "terraform-k8s" {
@@ -46,10 +48,5 @@ terraform {
     # key="<<env_name.k8s.tfstate>>" #OVERRIDE in TERRAFORM init
     # container_name="<<storage_account_container_name>>" #OVERRIDE in TERRAFORM init
   }
-}
-provider "azurerm" {
-  features {}
-  resource_provider_registrations = "none"
-  // version = "~>2.0.0"   # Optional if managed externally
 }
 
