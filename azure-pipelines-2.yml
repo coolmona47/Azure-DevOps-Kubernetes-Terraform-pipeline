@@ -31,43 +31,44 @@ steps:
     inputs:
       secureFile: 'azure_rsa1.pub'
 
-  # Terraform Init
-  - task: TerraformCLI@0
+  # Terraform Init using Azure CLI
+  - task: AzureCLI@2
     displayName: 'Terraform Init'
     inputs:
-      command: 'init'
+      azureSubscription: 'azure-resorce-manager-service-connection'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      backendType: 'azurerm'
-      backendServiceArm: 'azure-resorce-manager-service-connection'
-      ensureBackend: true
-      backendAzureRmResourceGroupName: 'terraform-backend-rg'
-      backendAzureRmResourceGroupLocation: 'westeurope'
-      backendAzureRmStorageAccountName: 'storageacctmohanxyz'
-      backendAzureRmContainerName: 'storageacctmohancontainer'
-      backendAzureRmKey: 'kubernetes-dev.tfstate'
-      allowTelemetryCollection: true
+      inlineScript: |
+        # Initialize Terraform backend
+        terraform init \
+          -backend-config="resource_group_name=terraform-backend-rg" \
+          -backend-config="storage_account_name=storageacctmohanxyz" \
+          -backend-config="container_name=storageacctmohancontainer" \
+          -backend-config="key=kubernetes-dev.tfstate"
 
-  # Terraform Plan (Optional but good practice)
-  - task: TerraformCLI@0
+  # Terraform Plan using Azure CLI
+  - task: AzureCLI@2
     displayName: 'Terraform Plan'
     inputs:
-      command: 'plan'
+      azureSubscription: 'azure-resorce-manager-service-connection'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      environmentServiceName: 'azure-resorce-manager-service-connection'
-      commandOptions: >
-        -var "client_id=$(client_id)"
-        -var "client_secret=$(client_secret)"
-        -var "ssh_public_key=$(publickey.secureFilePath)"
+      inlineScript: |
+        terraform plan \
+          -var "client_id=$(client_id)" \
+          -var "client_secret=$(client_secret)" \
+          -var "ssh_public_key=$(publickey.secureFilePath)" \
+          -out=tfplan
 
-  # Terraform Apply
-  - task: TerraformCLI@0
+  # Terraform Apply using Azure CLI
+  - task: AzureCLI@2
     displayName: 'Terraform Apply'
     inputs:
-      command: 'apply'
+      azureSubscription: 'azure-resorce-manager-service-connection'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-      environmentServiceName: 'azure-resorce-manager-service-connection'
-      commandOptions: >
-        -auto-approve
-        -var "client_id=$(client_id)"
-        -var "client_secret=$(client_secret)"
-        -var "ssh_public_key=$(publickey.secureFilePath)"
+      inlineScript: |
+        terraform apply -auto-approve tfplan
