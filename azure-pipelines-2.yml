@@ -3,6 +3,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
+  clean: true   # Optional: Clears any cached legacy extension versions
 
 variables:
   ssh_public_key_path: $(publickey.secureFilePath)
@@ -10,33 +11,32 @@ variables:
 steps:
   - checkout: self
 
-  # ✅ Install Terraform (Jason Johnson extension)
+  # ✅ Install Terraform via Jason Johnson extension
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
       terraformVersion: '1.12.2'
 
-  # 🧪 Check Terraform Version
+  # ✅ Confirm installed version
   - script: terraform version
     displayName: 'Check Terraform Version'
 
-  # 🛠️ Start Message
-  - script: echo "Starting Terraform on Azure DevOps"
+  - script: echo "🚀 Starting Terraform Init"
     displayName: 'Echo Start'
 
-  # 🔐 Download SSH Key from Secure Files
+  # 🔐 Download SSH public key from secure files
   - task: DownloadSecureFile@1
     name: publickey
     inputs:
       secureFile: 'azure_rsa1.pub'
 
-  # 🚀 Terraform Backend Initialization
-  - task: TerraformCLI@0
+  # 🔁 Run Terraform Init with AzureRM backend
+  - task: TerraformCLI@1   # ⚠️ Make sure you’re on version 1, not 0.2.3
     displayName: 'Terraform Init'
     inputs:
       command: 'init'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
       backendType: 'azurerm'
-      backendServiceArm: 'azure-resorce-manager-service-connection'  # ✅ exact name match
+      backendServiceArm: 'azure-resorce-manager-service-connection'  # ✅ Matches your exact connection name
       backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
       ensureBackend: true
       backendAzureRmResourceGroupName: 'terraform-backend-rg'
