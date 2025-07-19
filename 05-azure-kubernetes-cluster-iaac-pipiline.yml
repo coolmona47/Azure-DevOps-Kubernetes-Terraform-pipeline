@@ -1,4 +1,3 @@
-
 trigger:
 - main
 
@@ -6,8 +5,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo KS8 terraform azure!
+- checkout: self
+
+- script: echo "K8S terraform azure!"
   displayName: 'Run a one-line script'
+
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
@@ -28,4 +30,3 @@ steps:
     backendAzureRmStorageAccountName: 'storageacctmohanxyz'
     backendAzureRmContainerName: 'storageacctmohan'
     backendAzureRmKey: 'kubernetes-dev.tfstate'
-    allowTelemetryCollection: true
