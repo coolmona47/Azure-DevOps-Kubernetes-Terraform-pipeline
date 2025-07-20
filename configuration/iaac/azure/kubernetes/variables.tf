@@ -9,7 +9,6 @@ variable environment {
 variable location {
     default = "eastus"
 }
-
 variable node_count {
   default = 3
 }
