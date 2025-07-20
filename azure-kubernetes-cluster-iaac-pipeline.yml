@@ -5,16 +5,20 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo ks8 terraform azure!
-  displayName: 'Run a one-line script'
+- script: echo "Starting pipeline for K8s with Terraform and Azure!"
+  displayName: 'Start Message'
+
+- task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
+  displayName: 'Install Terraform'
+  inputs:
+    terraformVersion: '1.5.7'
 
 - task: DownloadSecureFile@1
   name: publickey
   inputs:
-      secureFile: 'AZURE_rsa.pub'
-      
+    secureFile: 'AZURE_rsa.pub'
+
 - task: TerraformCLI@2
-  
   inputs:
     command: 'init'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
