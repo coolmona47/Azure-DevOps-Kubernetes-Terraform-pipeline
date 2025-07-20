@@ -12,7 +12,7 @@ steps:
   name: publickey
   inputs:
       secureFile: 'AZURE_rsa.pub'
-      socketTimeout: '60sec'
+      
 - task: TerraformCLI@2
   
   inputs:
