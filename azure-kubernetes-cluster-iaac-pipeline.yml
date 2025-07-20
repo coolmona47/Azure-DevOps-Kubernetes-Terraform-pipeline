@@ -1,0 +1,32 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo ks8 terraform azure!
+  displayName: 'Run a one-line script'
+
+- task: DownloadSecureFile@1
+  name: publickey
+  inputs:
+      secureFile: 'AZURE_rsa.pub'
+      socketTimeout: '60sec'
+- task: TerraformCLI@2
+  
+  inputs:
+    command: 'init'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+    backendType: 'azurerm'
+    backendServiceArm: 'Azure-resource-manager-service-connection'
+    backendAzureRmTenantId: 'ff15dd1b-7224-4d88-8122-54a72fab1081'
+    backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
+    ensureBackend: true
+    backendAzureRmResourceGroupName: 'terraform-backend-rg-2'
+    backendAzureRmResourceGroupLocation: 'westeurope'
+    backendAzureRmStorageAccountName: 'storageaccountmohan123'
+    backendAzureRmContainerName: 'storageaccountmohancontainer'
+    backendAzureRmKey: 'kubernetes-dev.tfstate'
+    allowTelemetryCollection: true
