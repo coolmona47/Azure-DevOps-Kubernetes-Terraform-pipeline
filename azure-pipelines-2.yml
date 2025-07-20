@@ -45,11 +45,12 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
-
   - script: |
       terraform import azurerm_kubernetes_cluster.terraform-k8s \
       "/subscriptions/0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd/resourceGroups/kubernetes_dev/providers/Microsoft.ContainerService/managedClusters/k8stest_dev"
     displayName: 'Import AKS Cluster into Terraform State'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+
 
   - task: TerraformCLI@1
     displayName: 'Terraform Apply'
