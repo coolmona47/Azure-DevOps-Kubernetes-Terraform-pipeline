@@ -29,7 +29,7 @@ steps:
     backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
     ensureBackend: true
     backendAzureRmResourceGroupName: 'terraform-backend-rg-2'
-    backendAzureRmResourceGroupLocation: 'westeurope'
+    backendAzureRmResourceGroupLocation: 'eastus'
     backendAzureRmStorageAccountName: 'storageaccountmohanmona'
     backendAzureRmContainerName: 'storageaccountmohancontainer'
     backendAzureRmKey: 'kubernetes-dev.tfstate'
