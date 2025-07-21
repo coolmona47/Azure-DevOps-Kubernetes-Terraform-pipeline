@@ -57,7 +57,7 @@ stages:
         kubernetesServiceConnection: 'azure-kubernetes-connection'
         namespace: 'default'
         manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
-        containers: 'mohan3/curreny-exchange-devops:27'
+        containers: 'mohan3/curreny-exchnage-devops:27'
 
 # stage 2 
 # downlaod the k8s files
