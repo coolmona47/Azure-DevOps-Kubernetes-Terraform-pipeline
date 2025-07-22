@@ -1,53 +1,62 @@
 trigger:
-- main
+  - main
 
 pool:
   vmImage: ubuntu-latest
+  clean: true   # Optional: Clears any cached legacy extension versions
+
+variables:
+  ssh_public_key_path: $(publickey.secureFilePath)
 
 steps:
-- script: echo "Starting pipeline for K8s with Terraform and Azure!"
-  displayName: 'Start Message'
+  - checkout: self
 
-- task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
-  displayName: 'Install Terraform'
-  inputs:
-    terraformVersion: '1.5.7'
+  # ✅ Install Terraform via Jason Johnson extension
+  - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
+    inputs:
+      terraformVersion: '1.12.2'
 
-- task: DownloadSecureFile@1
-  name: publickey
-  inputs:
-    secureFile: 'AZURE_rsa.pub'
+  # ✅ Confirm installed version
+  - script: terraform version
+    displayName: 'Check Terraform Version'
 
-- task: TerraformCLI@2
-  displayName: 'Terraform Init with Upgrade'
-  inputs:
-    command: 'init'
+  - script: echo "🚀 Starting Terraform Init"
+    displayName: 'Echo Start'
+
+  # 🔐 Download SSH public key from secure files
+  - task: DownloadSecureFile@1
+    name: publickey
+    inputs:
+      secureFile: 'AZURE_rsa.pub'
+
+  # 🔁 Run Terraform Init with AzureRM backend
+  - task: TerraformCLI@1   # ⚠️ Make sure you’re on version 1, not 0.2.3
+    displayName: 'Terraform Init'
+    inputs:
+      command: 'init'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      backendType: 'azurerm'
+      backendServiceArm: 'Azure-resource-manager-service-connection'
+      backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
+      ensureBackend: true
+      backendAzureRmResourceGroupName: 'terraform-backend-rg'
+      backendAzureRmResourceGroupLocation: 'westeurope'
+      backendAzureRmStorageAccountName: 'storageacctmohanxyz'
+      backendAzureRmContainerName: 'storageacctmohancontainer'
+      backendAzureRmKey: 'kubernetes-dev.tfstate'
+      allowTelemetryCollection: true
+  - script: |
+      terraform import azurerm_kubernetes_cluster.terraform-k8s \
+      "/subscriptions/0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd/resourceGroups/kubernetes_dev/providers/Microsoft.ContainerService/managedClusters/k8stest_dev"
+    displayName: 'Import AKS Cluster into Terraform State'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    commandOptions: '-upgrade -var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
-    backendType: 'azurerm'
-    backendServiceArm: 'Azure-resource-manager-service-connection'
-    backendAzureRmTenantId: 'ff15dd1b-7224-4d88-8122-54a72fab1081'
-    backendAzureRmSubscriptionId: '0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd'
-    ensureBackend: true
-    backendAzureRmResourceGroupName: 'terraform-backend-rg-2'
-    backendAzureRmResourceGroupLocation: 'westeurope'
-    backendAzureRmStorageAccountName: 'storageaccountmohanmona'
-    backendAzureRmContainerName: 'storageaccountmohancontainer'
-    backendAzureRmKey: 'kubernetes-dev.tfstate'
-    allowTelemetryCollection: true
 
-- task: TerraformCLI@2
-  displayName: 'Terraform Apply'
-  inputs:
-    command: 'apply'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    environmentServiceName: 'Azure-resource-manager-service-connection'
-    commandOptions: '-auto-approve -var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
 
-- task: TerraformCLI@2
-  displayName: 'Terraform Destroy'
-  inputs:
-    command: 'destroy'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    environmentServiceName: 'Azure-resource-manager-service-connection'
-    commandOptions: '-auto-approve -var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+  - task: TerraformCLI@1
+    displayName: 'Terraform Apply'
+    inputs:
+      command: 'apply'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+      environmentServiceName: 'Azure-resource-manager-service-connection'
+      commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+      allowTelemetryCollection: true
