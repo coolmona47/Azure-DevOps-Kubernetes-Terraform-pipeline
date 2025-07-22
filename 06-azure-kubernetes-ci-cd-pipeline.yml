@@ -19,13 +19,13 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    # - task: Docker@2
-    #   inputs:
-    #     containerRegistry: 'mohan3-docker-hub'
-    #     repository: 'mohan3/curreny-exchange-devops'
-    #     command: 'buildAndPush'
-    #     Dockerfile: '**/Dockerfile'
-    #     tags: '$(tag)'
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'mohan3-docker-hub'
+        repository: 'mohan3/curreny-exchange-devops'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: '$(tag)'
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
