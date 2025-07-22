@@ -3,7 +3,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
-  clean: true   # Optional: Clears any cached legacy extension versions
+  clean: true
 
 variables:
   ssh_public_key_path: $(publickey.secureFilePath)
@@ -11,27 +11,23 @@ variables:
 steps:
   - checkout: self
 
-  # ✅ Install Terraform via Jason Johnson extension
+  # ✅ Install Terraform (newer version to support provider 4.x)
   - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@1
     inputs:
-      terraformVersion: '1.12.2'
+      terraformVersion: '1.4.6'  # ✅ Update to modern compatible version
 
-  # ✅ Confirm installed version
   - script: terraform version
     displayName: 'Check Terraform Version'
 
-  - script: echo "🚀 Starting Terraform Init"
-    displayName: 'Echo Start'
-
-  # 🔐 Download SSH public key from secure files
+  # ✅ Download SSH Public Key
   - task: DownloadSecureFile@1
     name: publickey
     inputs:
       secureFile: 'AZURE_rsa.pub'
 
-  # 🔁 Run Terraform Init with AzureRM backend
-  - task: TerraformCLI@1   # ⚠️ Make sure you’re on version 1, not 0.2.3
-    displayName: 'Terraform Init'
+  # ✅ Terraform Init with -upgrade
+  - task: TerraformCLI@1
+    displayName: 'Terraform Init with Upgrade'
     inputs:
       command: 'init'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
@@ -45,18 +41,21 @@ steps:
       backendAzureRmContainerName: 'storageacctmohancontainer'
       backendAzureRmKey: 'kubernetes-dev.tfstate'
       allowTelemetryCollection: true
+      commandOptions: '-upgrade'
+
+  # ✅ Import AKS Cluster (only if needed)
   - script: |
       terraform import azurerm_kubernetes_cluster.terraform-k8s \
       "/subscriptions/0d696f9a-d1f4-4c1b-980d-5a9501ecf1fd/resourceGroups/kubernetes_dev/providers/Microsoft.ContainerService/managedClusters/k8stest_dev"
     displayName: 'Import AKS Cluster into Terraform State'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
 
-
+  # ✅ Destroy the Cluster
   - task: TerraformCLI@1
-    displayName: 'Terraform Apply'
+    displayName: 'Terraform Destroy AKS Cluster'
     inputs:
-      command: 'apply'
+      command: 'destroy'
       workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
       environmentServiceName: 'Azure-resource-manager-service-connection'
-      commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+      commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath) -auto-approve'
       allowTelemetryCollection: true
