@@ -1,19 +1,18 @@
-trigger:
-- main
+trigger: none  # Prevent accidental runs
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- script: echo "Starting EKS Cluster Destruction Process"
+  displayName: 'Starting Destroy Process'
 
-# ✅ Step: Install Terraform (explicit task reference to avoid ambiguity)
+# Install Terraform
 - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
   inputs:
     terraformVersion: '1.5.7'
 
-# ✅ Step: Terraform Init
+# Terraform Init
 - task: TerraformTask@5
   inputs:
     provider: 'aws'
@@ -24,17 +23,11 @@ steps:
     backendAWSKey: 'kubernetes-dev.tfstate'
     commandOptions: '-reconfigure'
 
-# ✅ Step: Terraform Apply  
-- task: TerraformTask@5
-  inputs:
-    provider: 'aws'
-    command: 'apply'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/aws/kubernetes'
-    environmentServiceNameAWS: 'aws-for-terraform'
-
+# Terraform Destroy ONLY
 - task: TerraformTask@5
   inputs:
     provider: 'aws'
     command: 'destroy'
     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/aws/kubernetes'
     environmentServiceNameAWS: 'aws-for-terraform'
+    commandOptions: '-auto-approve'  # Add this to avoid manual confirmation
