@@ -24,24 +24,23 @@ stages:
     #     dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
     #     tags: |
     #       $(tag)
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)'
-    Contents: '**/*.yaml'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'manifests'
-    publishLocation: 'Container'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        Contents: '**/*.yaml'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'manifests'
+        publishLocation: 'Container'
 
 #build stage
-
 #build docker image
 #build docker image =>tag174
 #copy files to staging directory
 #publish
-stages:
+
 - stage: Deploy
   displayName: Deploy image
   jobs:
@@ -52,20 +51,20 @@ stages:
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
-       buildType: 'current'
-       artifactName: 'manifests'
-       itemPattern: '**/*.yaml'
-       targetPath: '$(System.ArtifactDirectory)'
+        buildType: 'current'
+        artifactName: 'manifests'
+        itemPattern: '**/*.yaml'
+        targetPath: '$(System.ArtifactsDirectory)'
     - task: KubernetesManifest@1
       inputs:
         action: 'deploy'
         connectionType: 'kubernetesServiceConnection'
         kubernetesServiceConnection: 'aws-kubernetes-cluster-service-connection'
         namespace: 'default'
-        manifests: '$(System.ArtifactDirectory)/configuration/kubernetes/deployment.yaml'
-        containers: mohan3/curreny-exchnage-devops:$(tag)
+        manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
+        containers: 'mohan3/curreny-exchnage-devops:$(tag)'
 
 #deploy stage
 #download what is published in the build stage 
 #image=> tag174 ->deploy to kubernetes service
-#apply- kubectl apply -f deployment.yaml ( whihci isside the kubernted folder in visual stuio code which is deployment.yaml)
+#apply- kubectl apply -f deployment.yaml ( which is inside the kubernetes folder in visual studio code which is deployment.yaml)
