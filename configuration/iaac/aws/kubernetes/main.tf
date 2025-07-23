@@ -32,7 +32,7 @@ module "in28minutes-cluster" {
   version = "18.31.2"  # Compatible with Terraform 1.5.7
      
   cluster_name    = "in28minutes-cluster"
-  cluster_version = "1.28"  # Supported version
+  cluster_version = "1.29"  # Supported version
      
   # CORRECT: Use 'subnet_ids' for version 18.x
   vpc_id     = aws_default_vpc.default.id
