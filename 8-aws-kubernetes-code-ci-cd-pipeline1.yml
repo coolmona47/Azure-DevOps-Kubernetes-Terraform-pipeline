@@ -5,8 +5,7 @@ resources:
 - repo: self
 
 variables:
-  tag: 174 
-  #'$(Build.BuildId)'
+  tag: '$(Build.BuildId)'
 
 stages:
 - stage: Build
@@ -17,13 +16,14 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
-    # - task: Docker@2
-    #   displayName: Build an image
-    #   inputs:
-    #     command: build
-    #     dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-    #     tags: |
-    #       $(tag)
+    - task: Docker@2
+      displayName: Build and push the image
+      inputs:
+        containerRegistry: 'mohan3-docker-hub'
+        repository: 'mohan3/curreny-exchnage-devops'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: '$(tag)'
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
@@ -37,7 +37,7 @@ stages:
 
 #build stage
 #build docker image
-#build docker image =>tag174
+#build docker image with dynamic tag (Build.BuildId)
 #copy files to staging directory
 #publish
 
@@ -65,6 +65,6 @@ stages:
         containers: 'mohan3/curreny-exchnage-devops:$(tag)'
 
 #deploy stage
-#download what is published in the build stage 
-#image=> tag174 ->deploy to kubernetes service
-#apply- kubectl apply -f deployment.yaml ( which is inside the kubernetes folder in visual studio code which is deployment.yaml)
+#download what is published in the build stage
+#image with dynamic tag -> deploy to kubernetes service
+#apply kubectl apply -f deployment.yaml (which is inside the kubernetes folder)
