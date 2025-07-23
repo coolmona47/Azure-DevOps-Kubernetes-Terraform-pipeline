@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.12"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 
@@ -32,33 +36,40 @@ provider "kubernetes" {
 
 module "in28minutes-cluster" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "12.2.0"  # Use version that supports your original syntax
+  version = "18.31.2"  # Compatible with Terraform 1.5.7
   
   cluster_name    = "in28minutes-cluster"
-  cluster_version = "1.18"  # Compatible version for module 12.x
+  cluster_version = "1.24"  # Supported version
   
-  # CORRECT: Use 'subnets' for version 12.x
-  subnets = ["subnet-035bd89faaa4b160b", "subnet-0397545b2caac2cb1"] #CHANGE
-  vpc_id  = aws_default_vpc.default.id
-  #vpc_id = "vpc-1234556abcdef"
+  # CORRECT: Use 'subnet_ids' for version 18.x
+  vpc_id     = aws_default_vpc.default.id
+  subnet_ids = ["subnet-035bd89faaa4b160b", "subnet-0397545b2caac2cb1"] #CHANGE
   
-  # CORRECT: Node group configuration for v12.x (your original format)
-  node_groups = {
+  # CORRECT: EKS managed node groups for v18.x
+  eks_managed_node_groups = {
     main = {
-      instance_type    = "t3.medium"  # t2.micro may have issues
-      asg_max_size     = 5
-      asg_desired_capacity = 3
-      asg_min_size     = 3
+      instance_types = ["t3.medium"]
+      min_size       = 3
+      max_size       = 5
+      desired_size   = 3
+      
+      # Additional required settings for v18.x
+      ami_type       = "AL2_x86_64"
+      capacity_type  = "ON_DEMAND"
     }
   }
+  
+  # Required for v18.x
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = true
 }
 
 data "aws_eks_cluster" "cluster" {
-  name = module.in28minutes-cluster.cluster_id
+  name = module.in28minutes-cluster.cluster_name
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.in28minutes-cluster.cluster_id
+  name = module.in28minutes-cluster.cluster_name
 }
 
 # We will use ServiceAccount to connect to K8S Cluster in CI/CD mode
