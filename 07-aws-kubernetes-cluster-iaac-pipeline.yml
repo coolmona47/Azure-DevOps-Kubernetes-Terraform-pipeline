@@ -23,3 +23,10 @@ steps:
     backendAWSBucketName: 'terraform-backend-state-mohan-123'
     backendAWSKey: 'kubernetes-dev.tfstate'
     commandOptions: '-reconfigure'
+
+- task: TerraformTask@5
+  inputs:
+    provider: 'aws'
+    command: 'apply'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/aws/kubernetes'
+    environmentServiceNameAWS: 'aws-for-terraform'
