@@ -24,6 +24,7 @@ steps:
     backendAWSKey: 'kubernetes-dev.tfstate'
     commandOptions: '-reconfigure'
 
+# ✅ Step: Terraform Apply  
 - task: TerraformTask@5
   inputs:
     provider: 'aws'
