@@ -7,7 +7,14 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
-- task: TerraformTask@0
+
+# ✅ Step: Install Terraform (explicit task reference to avoid ambiguity)
+- task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+  inputs:
+    terraformVersion: '1.5.7'
+
+# ✅ Step: Terraform Init
+- task: TerraformTask@5
   inputs:
     provider: 'aws'
     command: 'init'
@@ -15,5 +22,3 @@ steps:
     backendServiceAWS: 'aws-for-terraform'
     backendAWSBucketName: 'terraform-backend-state-mohan-123'
     backendAWSKey: 'kubernetes-dev.tfstate'
-# step 1 terraform init  - backend (s3 BUCKET)
-# step 2 terraform apply 
