@@ -32,25 +32,23 @@ provider "kubernetes" {
 
 module "in28minutes-cluster" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "17.24.0"  # Pin to older version that supports your syntax
+  version = "12.2.0"  # Use version that supports your original syntax
   
   cluster_name    = "in28minutes-cluster"
-  cluster_version = "1.21"  # 1.14 is too old and not supported
+  cluster_version = "1.18"  # Compatible version for module 12.x
   
-  # FIXED: Changed 'subnets' to 'subnet_ids'
-  subnet_ids = ["subnet-035bd89faaa4b160b", "subnet-0397545b2caac2cb1"] #CHANGE
-  vpc_id     = aws_default_vpc.default.id
-  #vpc_id    = "vpc-1234556abcdef"
+  # CORRECT: Use 'subnets' for version 12.x
+  subnets = ["subnet-035bd89faaa4b160b", "subnet-0397545b2caac2cb1"] #CHANGE
+  vpc_id  = aws_default_vpc.default.id
+  #vpc_id = "vpc-1234556abcdef"
   
-  # FIXED: Correct node group configuration for v17.x
+  # CORRECT: Node group configuration for v12.x (your original format)
   node_groups = {
     main = {
-      instance_types = ["t3.medium"]  # t2.micro may have issues with newer EKS
-      scaling_config = {
-        min_size     = 3
-        max_size     = 5
-        desired_size = 3
-      }
+      instance_type    = "t3.medium"  # t2.micro may have issues
+      asg_max_size     = 5
+      asg_desired_capacity = 3
+      asg_min_size     = 3
     }
   }
 }
