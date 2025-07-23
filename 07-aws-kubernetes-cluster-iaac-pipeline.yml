@@ -11,7 +11,7 @@ steps:
 # ✅ Step: Install Terraform (explicit task reference to avoid ambiguity)
 - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
   inputs:
-    terraformVersion: '0.15.5' 
+    terraformVersion: '1.5.7'
 
 # ✅ Step: Terraform Init
 - task: TerraformTask@5
