@@ -34,10 +34,10 @@ module "in28minutes-cluster" {
   cluster_version = "1.14"
 
   # ✅ Use hardcoded subnets from your AWS account
-  subnets = ["subnet-035bd89faaa4b160b", "subnet-0397545b2caac2cb1"]
+  subnets = ["subnet-09e8eed74b285c2e9", "subnet-0e15422fdaaba528f"]
 
   # ✅ Use default VPC ID
-  vpc_id = aws_default_vpc.default.id
+  vpc_id = vpc-0b38c8c186b5f178c
 
   # ✅ Use correct format for node_groups (map, not list)
   node_groups = {
