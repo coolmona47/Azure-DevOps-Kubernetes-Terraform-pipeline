@@ -66,10 +66,12 @@ module "in28minutes-cluster" {
 
 data "aws_eks_cluster" "cluster" {
   name = module.in28minutes-cluster.cluster_name
+  depends_on = [module.in28minutes-cluster]
 }
 
 data "aws_eks_cluster_auth" "cluster" {
   name = module.in28minutes-cluster.cluster_name
+  depends_on = [module.in28minutes-cluster]
 }
 
 # We will use ServiceAccount to connect to K8S Cluster in CI/CD mode
